@@ -46,14 +46,14 @@ npm run dev -w @liuyao/web     # 打开 http://localhost:3030
 
 输入所问 → 摇卦/手动报卦 → 六爻卦盘 + 六壬课盘 → AI 四维度互证(流式)。
 
-### 命令行(六爻断卦)
+### 命令行(双盘互证,与 Web 一致)
 
 ```bash
 npm install && npm run build
-node bin/liuyao.mjs "这次面试能成吗"            # 摇卦 + 断卦
+node bin/liuyao.mjs "这次面试能成吗"            # 摇卦 + 同刻起课 + 四维度互证
 node bin/liuyao.mjs "测病" --provider ollama     # 本地 ollama(质量好)
-node bin/liuyao.mjs "丢钱包能找回吗" --lines 6,7,8,9,7,8  # 手动报卦(初→上)
-node bin/liuyao.mjs "测事" --no-ai                # 只排卦
+node bin/liuyao.mjs "丢钱包能找回吗" --lines 6,7,8,9,7,8  # 手动报六爻(初→上)
+node bin/liuyao.mjs "测事" --no-ai                # 只排双盘,不互证
 ```
 
 ### 测试

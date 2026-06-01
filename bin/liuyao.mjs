@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 /**
- * 六爻 CLI:摇卦 / 排卦 / AI 断卦。
+ * 六爻 × 六壬 CLI:同一时刻双盘起卦 + AI 四维度互证(与 Web 一致)。
  *
  * 用法:
  *   node bin/liuyao.mjs "这次面试能成吗"
  *   node bin/liuyao.mjs "丢的钱包能找回吗" --lines 6,7,8,9,7,8     # 手动指定六爻(初→上,值 6/7/8/9)
  *   node bin/liuyao.mjs "今年财运如何" --date "2026-06-01 16:30"   # 指定占卦时间(默认此刻)
  *   node bin/liuyao.mjs "测病" --provider glm                      # 指定 AI provider
- *   node bin/liuyao.mjs "测事" --no-ai                             # 只排卦不断卦
+ *   node bin/liuyao.mjs "测事" --no-ai                             # 只排双盘不断卦
  *
- * 起卦装卦不需要任何 key;AI 断卦默认走免费免 key 的 pollinations。
+ * 起卦起课不需要任何 key;AI 互证默认走免费免 key 的 pollinations。
  */
 import { readFileSync } from "node:fs";
-import { castReading, castCoins, renderReading } from "../dist/index.js";
+import { castMoment, castCoins, renderReading, renderLiuren } from "../dist/index.js";
 
 // —— 极简 .env 加载 ——
 try {
@@ -66,21 +66,25 @@ if (opts.lines) {
   coinValues = castCoins();
 }
 
-const reading = castReading({ question, date: dateParts(opts.date), coinValues });
+const moment = castMoment({ question, date: dateParts(opts.date), coinValues });
 
 console.log("\n" + "═".repeat(60));
-console.log(renderReading(reading));
+console.log("【六爻】");
+console.log(renderReading(moment.liuyao));
+console.log("\n" + "─".repeat(60));
+console.log("【大六壬】");
+console.log(renderLiuren(moment.liuren));
 console.log("═".repeat(60));
 
 if (!opts.ai) process.exit(0);
 
-// —— AI 断卦(流式)——
-const { streamInterpretation } = await import("../dist/ai/index.js");
+// —— AI 四维度互证(流式)——
+const { streamCross } = await import("../dist/ai/index.js");
 const { providerSummary } = await import("../dist/ai/provider.js");
 
-console.log(`\n【AI 断卦 · ${providerSummary()}】\n`);
+console.log(`\n【互证 · 六爻 × 六壬 · ${providerSummary()}】\n`);
 try {
-  const stream = streamInterpretation(reading);
+  const stream = streamCross(moment);
   let got = 0;
   stream.on("text", (t) => {
     got += t.length;

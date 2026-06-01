@@ -46,14 +46,14 @@ npm run dev -w @liuyao/web     # open http://localhost:3030
 
 Enter your question → toss coins / manual input → Liu Yao board + Da Liu Ren board → streamed four-dimension cross-validation.
 
-### CLI (Liu Yao reading)
+### CLI (dual-board cross-validation, same as web)
 
 ```bash
 npm install && npm run build
-node bin/liuyao.mjs "Will this interview work out?"
+node bin/liuyao.mjs "Will this interview work out?"     # cast + same-moment course + cross-validation
 node bin/liuyao.mjs "测病" --provider ollama          # local ollama (good quality)
-node bin/liuyao.mjs "lost wallet?" --lines 6,7,8,9,7,8  # manual (bottom→top line)
-node bin/liuyao.mjs "测事" --no-ai                     # cast only
+node bin/liuyao.mjs "lost wallet?" --lines 6,7,8,9,7,8  # manual Liu Yao lines (bottom→top)
+node bin/liuyao.mjs "测事" --no-ai                     # cast both boards only, no cross-validation
 ```
 
 ### Tests
