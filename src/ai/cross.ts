@@ -101,11 +101,18 @@ export const CROSS_SEGMENTS: CrossSegment[] = [
 ];
 
 function buildSegmentPrompt(question: string, seg: CrossSegment): string {
-  return `就「${question || "所问之事"}」做六爻 × 六壬互证。现在**只**写这一个维度,其它维度一律不写、不重复:\n\n${seg.heading}\n${seg.instruction}\n\n要求:用两盘互证本维度,标注两系统【一致 / 分歧 / 仅一方】;简洁直接,只锚定上面给定的盘面事实,不编造盘中没有的细节。**输出以「${seg.heading}」这个小标题开头。**`;
+  return `就「${question || "所问之事"}」做六爻 × 六壬互证。现在**只**写这一个维度,其它维度一律不写、不重复:\n\n${seg.heading}\n${seg.instruction}\n\n要求:用两盘互证本维度,标注两系统【一致 / 分歧 / 仅一方】;简洁直接,只锚定上面给定的盘面事实,不编造盘中没有的细节。\n【篇幅·硬性】本维度约 ${SEGMENT_WORDS} 字写透即可,**务必在篇幅内把话说完、以句号自然收尾,宁短勿断,绝不写到一半被切。**\n**输出以「${seg.heading}」这个小标题开头。**`;
 }
 
-/** 每段输出上限。压到约 1100 token,确保即便慢模型(~28 字/秒)单段也能在 60s 内跑完。 */
-const SEGMENT_MAX_TOKENS = 1100;
+/** 单维目标字数:够说透又让最慢模型(Opus)在篇幅内自然收尾。 */
+const SEGMENT_WORDS = "600–800";
+
+/**
+ * 每段输出上限。设 1400 token —— 纯安全网,明显高于自然篇幅(~1000 字):
+ * 控篇幅靠 prompt 硬性字数,让模型撞顶前以句号收尾,既不被 max_tokens 切半句,
+ * 也远在 Vercel 60s 内(Opus ~1000 字约 28s)。上限须高于自然篇幅,切勿压到其下。
+ */
+const SEGMENT_MAX_TOKENS = 1400;
 
 /** 分段流式断卦:只断一个维度。segKey ∈ CROSS_SEGMENTS[].key。 */
 export function streamCrossSegment(m: MomentReading, segKey: string, opts?: ProviderOptions) {
