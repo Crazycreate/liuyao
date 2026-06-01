@@ -52,6 +52,41 @@ test("月将为合法地支", () => {
   assert.ok(ZHI.includes(c.moment.yuejiang));
 });
 
+test("昴星课中末:阳日(中支上·末干上)、阴日(中干上·末支上,相反)", () => {
+  let found = 0;
+  for (let y = 2023; y <= 2026; y++)
+    for (let mo = 1; mo <= 12; mo++)
+      for (let d = 3; d <= 27; d += 6)
+        for (let h = 1; h < 24; h += 2) {
+          const c = castLiuren({ year: y, month: mo, day: d, hour: h, minute: 0 });
+          if (!c.sanchuan.method.startsWith("昴星")) continue;
+          found++;
+          const ganShang = c.sike[0].shang;
+          const zhiShang = c.sike[2].shang;
+          const yang = "甲丙戊庚壬".includes(c.moment.dayGan);
+          assert.equal(c.sanchuan.zhong, yang ? zhiShang : ganShang, "昴星中传错");
+          assert.equal(c.sanchuan.mo, yang ? ganShang : zhiShang, "昴星末传错");
+        }
+  assert.ok(found > 0, "应扫到昴星课");
+});
+
+test("反吟无亲:初传=日支驿马,中支上神、末干上神", () => {
+  const YIMA = { 申: "寅", 子: "寅", 辰: "寅", 寅: "申", 午: "申", 戌: "申", 巳: "亥", 酉: "亥", 丑: "亥", 亥: "巳", 卯: "巳", 未: "巳" };
+  let found = 0;
+  for (let y = 2023; y <= 2026; y++)
+    for (let mo = 1; mo <= 12; mo++)
+      for (let d = 3; d <= 27; d += 6)
+        for (let h = 1; h < 24; h += 2) {
+          const c = castLiuren({ year: y, month: mo, day: d, hour: h, minute: 0 });
+          if (c.sanchuan.method !== "反吟(无亲)") continue;
+          found++;
+          assert.equal(c.sanchuan.chu, YIMA[c.moment.dayZhi], "反吟无亲初传应为驿马");
+          assert.equal(c.sanchuan.zhong, c.sike[2].shang);
+          assert.equal(c.sanchuan.mo, c.sike[0].shang);
+        }
+  assert.ok(found > 0, "应扫到反吟无亲课");
+});
+
 test("遍历全年×十二时辰起课不抛错", () => {
   for (let m = 1; m <= 12; m++) {
     for (let h = 0; h < 24; h += 2) {

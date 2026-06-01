@@ -127,12 +127,12 @@ export function buildSanChuan(
     if (zhong === chu) zhong = zhiShang; // 自刑则取支上神
     let mo = XING[zhong]!;
     if (mo === zhong) mo = ganShang;
-    return { chu, zhong, mo, method: "伏吟", note: "伏吟用刑,中末细则需课例校验" };
+    return { chu, zhong, mo, method: "伏吟", note: "伏吟用刑递推;自刑转取支/干上神(此细则流派或异)" };
   }
-  // ── 反吟(无克:井栏,用驿马) ──
+  // ── 反吟(无克:无亲/井栏射,驿马发用,中支上神、末干上神) ──
   if (fanyin && !hasKe) {
     const chu = YIMA[dayZhi]!;
-    return { chu, zhong: zhiShang, mo: ganShang, method: "反吟(井栏)", note: "反吟无克用驿马,需课例校验" };
+    return { chu, zhong: zhiShang, mo: ganShang, method: "反吟(无亲)" };
   }
 
   // ── 贼克 / 比用 / 涉害 ──
@@ -188,12 +188,14 @@ export function buildSanChuan(
   }
 
   // ── 昴星(无克无遥克) ──
-  const chu = isYangGan(dayGan) ? shangShen(tianpan, "酉") : ZHI[tianpan.indexOf("酉")]!;
+  // 阳日「虎视转蓬」:初=地盘酉上之天盘神,中=支上神,末=干上神。
+  // 阴日「冬蛇掩目」:初=天盘酉下之地盘神,中=干上神,末=支上神(中末与阳日相反)。
+  const yang = isYangGan(dayGan);
+  const chu = yang ? shangShen(tianpan, "酉") : ZHI[tianpan.indexOf("酉")]!;
   return {
     chu,
-    zhong: zhiShang,
-    mo: ganShang,
-    method: isYangGan(dayGan) ? "昴星(虎视)" : "昴星(冬蛇掩目)",
-    note: "昴星中末细则需课例校验",
+    zhong: yang ? zhiShang : ganShang,
+    mo: yang ? ganShang : zhiShang,
+    method: yang ? "昴星(虎视)" : "昴星(冬蛇掩目)",
   };
 }
