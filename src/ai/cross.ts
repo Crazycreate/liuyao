@@ -108,11 +108,12 @@ function buildSegmentPrompt(question: string, seg: CrossSegment): string {
 const SEGMENT_WORDS = "600–800";
 
 /**
- * 每段输出上限。设 1400 token —— 纯安全网,明显高于自然篇幅(~1000 字):
- * 控篇幅靠 prompt 硬性字数,让模型撞顶前以句号收尾,既不被 max_tokens 切半句,
- * 也远在 Vercel 60s 内(Opus ~1000 字约 28s)。上限须高于自然篇幅,切勿压到其下。
+ * 每段输出上限。设 1700 token —— 纯安全网。Opus 篇幅有波动(实测 1085~1310 字),
+ * 1400 曾被 chengbai 的 1310 擦顶切半句;留到 1700(高出观测峰值 ~400 字)方稳,
+ * 与 mingli 同等余量。控篇幅靠 prompt 硬性字数,让模型撞顶前以句号收尾;
+ * Opus ~1300 字约 40s,仍稳在 Vercel 60s 内。上限须明显高于自然篇幅,切勿压到其下。
  */
-const SEGMENT_MAX_TOKENS = 1400;
+const SEGMENT_MAX_TOKENS = 1700;
 
 /** 分段流式断卦:只断一个维度。segKey ∈ CROSS_SEGMENTS[].key。 */
 export function streamCrossSegment(m: MomentReading, segKey: string, opts?: ProviderOptions) {
