@@ -8,7 +8,7 @@ An AI-assisted divination tool combining **Liu Yao (六爻, najia I Ching)** and
 - **Liu Yao = your intention sample**: your relationship to the matter (the hexagram you cast is personal).
 - **Cross-validation = objective field ∩ personal projection**: same source, same instant — where they agree is trustworthy, where they diverge stays in doubt.
 
-![Liu Yao × Da Liu Ren dual-board web UI](docs/web-screenshot.png)
+![Liu Yao × Da Liu Ren dual-board web UI](docs/web-dual-board.png)
 
 ## Core Design Principle
 
