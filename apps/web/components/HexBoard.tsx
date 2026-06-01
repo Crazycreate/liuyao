@@ -2,6 +2,32 @@ import type { Reading, Line } from "liuyao";
 
 const POS = ["初", "二", "三", "四", "五", "上"];
 
+function Bar({ yang, moving }: { yang: boolean; moving?: boolean }) {
+  return yang ? (
+    <div className={`bar2 yang${moving ? " mv" : ""}`}>
+      <i />
+    </div>
+  ) : (
+    <div className={`bar2 yin${moving ? " mv" : ""}`}>
+      <i />
+      <i />
+    </div>
+  );
+}
+
+function Qin({ line }: { line: Line }) {
+  return (
+    <span className="liuqin2">
+      <span className="rel">{line.relative}</span>
+      {line.gan}
+      <span className={`e-${line.element}`}>
+        {line.zhi}
+        {line.element}
+      </span>
+    </span>
+  );
+}
+
 function Tags({ line }: { line: Line }) {
   const f = line.flags;
   const tags: { t: string; warn?: boolean }[] = [];
@@ -24,53 +50,39 @@ function Tags({ line }: { line: Line }) {
 }
 
 function YaoRow({ line, bian }: { line: Line; bian: Line | null }) {
-  const bar = line.yang ? (
-    <div className="bar yang">
-      <div className="seg" />
-    </div>
-  ) : (
-    <div className="bar yin">
-      <div className="seg" />
-      <div className="seg" />
-    </div>
-  );
   return (
-    <>
-      <div className={`yao${line.moving ? " moving" : ""}`}>
-        <div className="spirit">{line.spirit}</div>
-        <div className="liuqin">
-          <span className="rel">{line.relative}</span>
-          {line.gan}
-          <span className={`e-${line.element}`}>
-            {line.zhi}
-            {line.element}
+    <div className={`yao2${line.moving ? " moving" : ""}`}>
+      <div className="row-main">
+        {/* 本卦 */}
+        <div className="ben-side">
+          <span className="spirit">{line.spirit}</span>
+          <Qin line={line} />
+          <Bar yang={line.yang} moving={line.moving} />
+          <span className="movemark">{line.moving ? (line.yang ? "○" : "×") : ""}</span>
+          <span className={`sy${line.isShi ? " shi" : ""}${line.isYing ? " ying" : ""}`}>
+            {line.isShi ? "世" : line.isYing ? "应" : ""}
           </span>
         </div>
-        {bar}
-        <div className="movemark">{line.moving ? (line.yang ? "○" : "×") : ""}</div>
-        <div className={`sy${line.isShi ? " shi" : ""}${line.isYing ? " ying" : ""}`}>
-          {line.isShi ? "世" : line.isYing ? "应" : ""}
-        </div>
-        {bian && line.moving ? (
-          <div className="changed">
-            {bian.relative}
-            {bian.gan}
-            <span className={`e-${bian.element}`}>
-              {bian.zhi}
-              {bian.element}
-            </span>
-          </div>
+        {/* 变卦 */}
+        {bian ? (
+          <>
+            <span className="vdiv" />
+            <div className="bian-side">
+              <Bar yang={bian.yang} moving={line.moving} />
+              <Qin line={bian} />
+            </div>
+          </>
         ) : null}
-        <Tags line={line} />
       </div>
-    </>
+      <Tags line={line} />
+    </div>
   );
 }
 
 export function HexBoard({ reading }: { reading: Reading }) {
   const { ben, bian, date, movingPositions, fushen } = reading;
-  // 上爻在上,初爻在下
-  const order = [5, 4, 3, 2, 1, 0];
+  const order = [5, 4, 3, 2, 1, 0]; // 上爻在上,初爻在下
+
   return (
     <div className="card">
       <div className="board-head">
@@ -102,7 +114,14 @@ export function HexBoard({ reading }: { reading: Reading }) {
         </span>
       </div>
 
-      <div className="lines">
+      {bian ? (
+        <div className="cols-label">
+          <span>本卦 · {ben.name}</span>
+          <span>变卦 · {bian.name}</span>
+        </div>
+      ) : null}
+
+      <div className="lines2">
         {order.map((i) => (
           <YaoRow key={i} line={ben.lines[i]} bian={bian ? bian.lines[i] : null} />
         ))}

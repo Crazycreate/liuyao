@@ -434,21 +434,113 @@ label.fld {
   font-weight: 600;
 }
 
-.lines {
+/* ── 六爻盘:本卦 | 变卦 双栏 ── */
+.cols-label {
+  display: flex;
+  gap: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+.cols-label span:first-child {
+  width: 20rem;
+  flex: none;
+}
+.lines2 {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+.yao2 {
+  display: flex;
+  flex-direction: column;
+  padding: 0.2rem 0;
+}
+.yao2.moving {
+  background: linear-gradient(90deg, oklch(52% 0.18 32 / 0.07), transparent 85%);
+  border-radius: 8px;
+}
+.row-main {
+  display: flex;
+  align-items: center;
+}
+.ben-side {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 20rem;
+  flex: none;
+}
+.ben-side .spirit {
+  width: 2.2rem;
+  flex: none;
+}
+.ben-side .movemark {
+  width: 1rem;
+  flex: none;
+}
+.ben-side .sy {
+  width: 1.3rem;
+  flex: none;
+  text-align: center;
+}
+.yao2 .tags {
+  margin-left: 2.7rem;
+  margin-top: 0.15rem;
+}
+.bian-side {
+  display: flex;
+  align-items: center;
   gap: 0.55rem;
 }
-.yao {
-  display: grid;
-  grid-template-columns: 2.2rem 8.5rem 1fr 1.4rem 8rem;
-  align-items: center;
-  gap: 0.5rem 0.8rem;
-  padding: 0.25rem 0;
+.vdiv {
+  width: 1px;
+  align-self: stretch;
+  background: var(--line);
+  margin: 0 1rem;
+  flex: none;
 }
-.yao.moving {
-  background: linear-gradient(90deg, oklch(52% 0.18 32 / 0.07), transparent 70%);
-  border-radius: 8px;
+.liuqin2 {
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  width: 6.8rem;
+  flex: none;
+}
+.liuqin2 .rel {
+  font-weight: 600;
+  margin-right: 0.12rem;
+}
+.bar2 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 104px;
+  flex: none;
+}
+.bar2 i {
+  height: 12px;
+  border-radius: 2px;
+  background: var(--ink);
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.18);
+}
+.bar2.yang i {
+  width: 104px;
+}
+.bar2.yin i {
+  width: 44px;
+}
+.bar2.mv i {
+  background: var(--cinnabar);
+}
+@media (max-width: 680px) {
+  .cols-label { display: none; }
+  .row-main { flex-wrap: wrap; }
+  .vdiv { display: none; }
+  .ben-side { width: auto; }
+  .bian-side { margin-left: 2.7rem; margin-top: 0.2rem; opacity: 0.92; }
+  .bian-side::before { content: "变"; color: var(--cinnabar); font-size: 0.7rem; margin-right: 0.2rem; }
 }
 .spirit {
   font-size: 0.82rem;
