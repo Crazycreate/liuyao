@@ -9,4 +9,5 @@ export {
   providerSummary,
   type Usage,
   type TextStream,
+  type ProviderOptions,
 } from "./provider.js";

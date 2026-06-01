@@ -2,27 +2,24 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 
 /**
- * 多 provider 断卦层:起卦装卦永远本地确定性计算、不花钱;只有 AI 断卦走这里。
- * 通过 AI_PROVIDER 环境变量切换。默认 pollinations(免费·免 key·开箱即用),
- * 也可用 ollama(本地免key)/ glm / gemini / groq / anthropic / custom。
- * 设计:除 Anthropic 外都走 OpenAI 兼容协议,靠 baseURL + 模型名区分。
+ * 多 provider 断卦层:起卦起课永远本地确定性计算、不花钱;只有 AI 断卦/互证走这里。
+ * 默认 AI_PROVIDER(默认 pollinations,免 key)。也支持**按请求覆盖**(BYOK):
+ * 调用方传 ProviderOptions{provider, apiKey, model, baseURL},用用户自带的 key/模型,
+ * 不读服务端环境变量——这样公网部署可"默认免费 + 用户自填 key"。
  */
 
 export interface SystemBlock {
   text: string;
   cache?: boolean;
 }
-
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
-
 export interface Usage {
   inputTokens: number;
   outputTokens: number;
 }
-
 export type ModelKind = "report" | "chat";
 
 export interface CompletionRequest {
@@ -30,6 +27,14 @@ export interface CompletionRequest {
   system: SystemBlock[];
   messages: ChatMessage[];
   maxTokens: number;
+}
+
+/** 按请求覆盖 provider/key(BYOK)。任一字段缺省则回落到环境变量/默认。 */
+export interface ProviderOptions {
+  provider?: string;
+  apiKey?: string;
+  model?: string;
+  baseURL?: string;
 }
 
 interface ProviderDef {
@@ -46,7 +51,7 @@ interface ProviderDef {
 const PROVIDERS: Record<string, ProviderDef> = {
   pollinations: {
     kind: "openai",
-    label: "Pollinations(免费·免 key·开箱即用)",
+    label: "Pollinations(免费·免 key)",
     keys: ["POLLINATIONS_TOKEN"],
     baseURL: process.env.POLLINATIONS_BASE_URL || "https://text.pollinations.ai/openai",
     models: { report: "openai", chat: "openai" },
@@ -103,71 +108,65 @@ const PROVIDERS: Record<string, ProviderDef> = {
 
 const DEFAULT_PROVIDER = "pollinations";
 
-export function activeProviderName(): string {
-  const name = (process.env.AI_PROVIDER || DEFAULT_PROVIDER).trim().toLowerCase();
+export function activeProviderName(opts?: ProviderOptions): string {
+  const name = (opts?.provider || process.env.AI_PROVIDER || DEFAULT_PROVIDER).trim().toLowerCase();
   if (name !== "custom" && !PROVIDERS[name]) {
-    throw new Error(`未知 AI_PROVIDER="${name}"。可选:${Object.keys(PROVIDERS).join(" / ")} / custom`);
+    throw new Error(`未知 AI provider="${name}"。可选:${Object.keys(PROVIDERS).join(" / ")} / custom`);
   }
   return name;
 }
 
-function resolveDef(name: string): ProviderDef {
+function resolveDef(name: string, opts?: ProviderOptions): ProviderDef {
   if (name === "custom") {
-    const baseURL = process.env.AI_BASE_URL;
-    if (!baseURL) throw new Error("AI_PROVIDER=custom 需要设置 AI_BASE_URL(任意 OpenAI 兼容端点)");
-    const report = process.env.AI_MODEL_REPORT;
-    const chat = process.env.AI_MODEL_CHAT;
-    if (!report || !chat) throw new Error("AI_PROVIDER=custom 需要设置 AI_MODEL_REPORT 与 AI_MODEL_CHAT");
+    const baseURL = opts?.baseURL || process.env.AI_BASE_URL;
+    if (!baseURL) throw new Error("custom 需要 baseURL(任意 OpenAI 兼容端点)");
+    const model = opts?.model || process.env.AI_MODEL_REPORT || process.env.AI_MODEL_CHAT;
+    if (!model) throw new Error("custom 需要模型名(model)");
     return {
       kind: "openai",
       label: `自定义(${baseURL})`,
       keys: ["AI_API_KEY"],
       baseURL,
-      models: { report, chat },
+      models: { report: model, chat: model },
       free: false,
-      noKey: !process.env.AI_API_KEY,
+      noKey: !(opts?.apiKey || process.env.AI_API_KEY),
     };
   }
-  return PROVIDERS[name]!;
+  const def = PROVIDERS[name]!;
+  return opts?.baseURL ? { ...def, baseURL: opts.baseURL } : def;
 }
 
-function apiKeyFor(def: ProviderDef): string {
+function apiKeyFor(def: ProviderDef, opts?: ProviderOptions): string {
+  if (opts?.apiKey && opts.apiKey.trim()) return opts.apiKey.trim();
   for (const k of def.keys) {
     const v = process.env[k];
     if (v && v.trim()) return v.trim();
   }
   if (def.noKey) return "not-needed";
   throw new Error(
-    `缺少 ${def.label} 的 API key。请在 .env 设置 ${def.keys[0]}=...` +
-      (def.signup ? `(免费申请:${def.signup})` : ""),
+    `缺少 ${def.label} 的 API key。请在设置里填入,或在 .env 配置 ${def.keys[0]}` +
+      (def.signup ? `(申请:${def.signup})` : ""),
   );
 }
 
-function modelFor(def: ProviderDef, kind: ModelKind): string {
+function modelFor(def: ProviderDef, kind: ModelKind, opts?: ProviderOptions): string {
+  if (opts?.model && opts.model.trim()) return opts.model.trim();
   const override = kind === "report" ? process.env.AI_MODEL_REPORT : process.env.AI_MODEL_CHAT;
   return (override && override.trim()) || def.models[kind];
 }
 
-export function providerSummary(): string {
-  const name = activeProviderName();
-  const def = resolveDef(name);
-  return `${name}(${def.label}) · ${modelFor(def, "report")}`;
+export function providerSummary(opts?: ProviderOptions): string {
+  const name = activeProviderName(opts);
+  const def = resolveDef(name, opts);
+  return `${name}(${def.label}) · ${modelFor(def, "report", opts)}`;
 }
 
-let anthropicClient: Anthropic | null = null;
-const openaiClients = new Map<string, OpenAI>();
-
-function getAnthropic(apiKey: string): Anthropic {
-  if (!anthropicClient) anthropicClient = new Anthropic({ apiKey, timeout: 15 * 60 * 1000, maxRetries: 2 });
-  return anthropicClient;
+const TIMEOUT = 15 * 60 * 1000;
+function makeAnthropic(apiKey: string): Anthropic {
+  return new Anthropic({ apiKey, timeout: TIMEOUT, maxRetries: 2 });
 }
-
-function getOpenAI(name: string, def: ProviderDef): OpenAI {
-  const cached = openaiClients.get(name);
-  if (cached) return cached;
-  const client = new OpenAI({ apiKey: apiKeyFor(def), baseURL: def.baseURL, timeout: 15 * 60 * 1000, maxRetries: 2 });
-  openaiClients.set(name, client);
-  return client;
+function makeOpenAI(apiKey: string, baseURL?: string): OpenAI {
+  return new OpenAI({ apiKey, baseURL, timeout: TIMEOUT, maxRetries: 2 });
 }
 
 function toAnthropicSystem(system: SystemBlock[]): Anthropic.TextBlockParam[] {
@@ -175,7 +174,6 @@ function toAnthropicSystem(system: SystemBlock[]): Anthropic.TextBlockParam[] {
     b.cache ? { type: "text", text: b.text, cache_control: { type: "ephemeral" } } : { type: "text", text: b.text },
   );
 }
-
 function toOpenAIMessages(
   system: SystemBlock[],
   messages: ChatMessage[],
@@ -215,18 +213,15 @@ class OpenAITextStream implements TextStream {
     }
     return this;
   }
-
   private emitText(delta: string): void {
     this.fullText += delta;
     if (this.textListeners.length === 0) this.buffered.push(delta);
     else for (const l of this.textListeners) l(delta);
   }
-
   finalMessage(): Promise<{ text: string }> {
     if (!this.done) this.done = this.run();
     return this.done;
   }
-
   private async run(): Promise<{ text: string }> {
     try {
       const stream = await this.open(this.aborter.signal);
@@ -240,18 +235,21 @@ class OpenAITextStream implements TextStream {
       throw err;
     }
   }
-
   abort(): void {
     this.aborter.abort();
   }
 }
 
-export async function chatComplete(req: CompletionRequest): Promise<{ text: string; usage: Usage }> {
-  const name = activeProviderName();
-  const def = resolveDef(name);
+export async function chatComplete(
+  req: CompletionRequest,
+  opts?: ProviderOptions,
+): Promise<{ text: string; usage: Usage }> {
+  const name = activeProviderName(opts);
+  const def = resolveDef(name, opts);
+  const apiKey = apiKeyFor(def, opts);
   if (def.kind === "anthropic") {
-    const res = await getAnthropic(apiKeyFor(def)).messages.create({
-      model: modelFor(def, req.kind),
+    const res = await makeAnthropic(apiKey).messages.create({
+      model: modelFor(def, req.kind, opts),
       max_tokens: req.maxTokens,
       system: toAnthropicSystem(req.system),
       messages: req.messages.map((m) => ({ role: m.role, content: m.content })),
@@ -262,33 +260,31 @@ export async function chatComplete(req: CompletionRequest): Promise<{ text: stri
       .join("");
     return { text, usage: { inputTokens: res.usage.input_tokens, outputTokens: res.usage.output_tokens } };
   }
-  const res = await getOpenAI(name, def).chat.completions.create({
-    model: modelFor(def, req.kind),
+  const res = await makeOpenAI(apiKey, def.baseURL).chat.completions.create({
+    model: modelFor(def, req.kind, opts),
     max_tokens: req.maxTokens,
     messages: toOpenAIMessages(req.system, req.messages),
   });
   return {
     text: res.choices?.[0]?.message?.content ?? "",
-    usage: {
-      inputTokens: res.usage?.prompt_tokens ?? 0,
-      outputTokens: res.usage?.completion_tokens ?? 0,
-    },
+    usage: { inputTokens: res.usage?.prompt_tokens ?? 0, outputTokens: res.usage?.completion_tokens ?? 0 },
   };
 }
 
-export function chatStream(req: CompletionRequest): TextStream {
-  const name = activeProviderName();
-  const def = resolveDef(name);
+export function chatStream(req: CompletionRequest, opts?: ProviderOptions): TextStream {
+  const name = activeProviderName(opts);
+  const def = resolveDef(name, opts);
+  const apiKey = apiKeyFor(def, opts);
   if (def.kind === "anthropic") {
-    return getAnthropic(apiKeyFor(def)).messages.stream({
-      model: modelFor(def, req.kind),
+    return makeAnthropic(apiKey).messages.stream({
+      model: modelFor(def, req.kind, opts),
       max_tokens: req.maxTokens,
       system: toAnthropicSystem(req.system),
       messages: req.messages.map((m) => ({ role: m.role, content: m.content })),
     }) as unknown as TextStream;
   }
-  const client = getOpenAI(name, def);
-  const model = modelFor(def, req.kind);
+  const client = makeOpenAI(apiKey, def.baseURL);
+  const model = modelFor(def, req.kind, opts);
   const messages = toOpenAIMessages(req.system, req.messages);
   return new OpenAITextStream((signal) =>
     client.chat.completions.create({ model, max_tokens: req.maxTokens, stream: true, messages }, { signal }),

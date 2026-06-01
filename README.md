@@ -75,6 +75,19 @@ npm test
 | `anthropic` | 付费 | 是 | 质量最高 |
 | `custom` | — | 看情况 | 任意 OpenAI 兼容端点 |
 
+> **Web 端可自带 key(BYOK)**:网页默认就是免费 Pollinations;点「⚙ AI 设置」可选 GLM / Gemini / Claude / 自定义并填入自己的 key——**key 只存在你浏览器、随该次请求转发、服务端不保存不记录**。
+
+## 部署到 Vercel(公网)
+
+仓库已配好一键导入(`apps/web/vercel.json` + 构建脚本会先编排盘引擎再 `next build`):
+
+1. 打开 [vercel.com](https://vercel.com) → **Add New → Project** → 导入 `Crazycreate/liuyao`
+2. **Root Directory 选 `apps/web`**(Framework 自动识别 Next.js)
+3. **Deploy**。打开即用:默认免费 Pollinations,用户在网页「⚙ AI 设置」里自填 key 换更好的模型
+4. (可选)在 Vercel → Settings → Environment Variables 设 `AI_PROVIDER` + 对应 key,作为服务端默认
+
+> ⚠️ Vercel 免费版 Serverless 函数超时 **60s**:快模型(GLM-Flash / Gemini-Flash)够用;Claude Opus 长断可能超时,需 Pro 版或换快模型。
+
 ## 项目结构
 
 ```

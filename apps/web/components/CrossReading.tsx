@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { streamPost } from "@/lib/streamClient";
+import type { AiSettings } from "@/components/SettingsPanel";
 
 export interface CrossInput {
   question: string;
@@ -12,7 +13,7 @@ export interface CrossInput {
 }
 
 /** 六爻 × 六壬 四维度互证(流式)。 */
-export function CrossReading({ input }: { input: CrossInput }) {
+export function CrossReading({ input, ai }: { input: CrossInput; ai: AiSettings }) {
   const [text, setText] = useState("");
   const [state, setState] = useState<"streaming" | "done" | "error">("streaming");
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export function CrossReading({ input }: { input: CrossInput }) {
     setText("");
     setError(null);
     setState("streaming");
-    streamPost("/api/cross", input, (full) => setText(full), { signal: ac.signal })
+    streamPost("/api/cross", { ...input, ai }, (full) => setText(full), { signal: ac.signal })
       .then(() => setState("done"))
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;

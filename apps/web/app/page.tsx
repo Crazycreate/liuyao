@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Reading, LiurenCourse } from "liuyao";
 import { CastForm, type CastSubmit } from "@/components/CastForm";
 import { HexBoard } from "@/components/HexBoard";
 import { LiurenBoard } from "@/components/LiurenBoard";
 import { CrossReading, type CrossInput } from "@/components/CrossReading";
+import { SettingsPanel, loadAi, DEFAULT_AI, type AiSettings } from "@/components/SettingsPanel";
 
 /** 客户端本地时间 → 'YYYY-MM-DDTHH:mm'(避免服务端时区误差,占时以用户本地为准)。 */
 function localNow(): string {
@@ -24,6 +25,12 @@ export default function Page() {
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ai, setAi] = useState<AiSettings>(DEFAULT_AI);
+
+  // 客户端挂载后从 localStorage 读 AI 设置(避免 SSR 不一致)
+  useEffect(() => {
+    setAi(loadAi());
+  }, []);
 
   async function onCast(s: CastSubmit) {
     setBusy(true);
@@ -72,6 +79,8 @@ export default function Page() {
 
       <CastForm busy={busy} onCast={onCast} />
 
+      <SettingsPanel value={ai} onChange={setAi} />
+
       {error ? <p className="notice" style={{ marginTop: "1rem" }}>{error}</p> : null}
 
       {result ? (
@@ -81,7 +90,7 @@ export default function Page() {
           <div style={{ height: "1.6rem" }} />
           <LiurenBoard course={result.liuren} />
           <div style={{ height: "1.6rem" }} />
-          <CrossReading input={result.input} />
+          <CrossReading input={result.input} ai={ai} />
         </>
       ) : null}
 

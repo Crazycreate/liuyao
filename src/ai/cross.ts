@@ -1,7 +1,7 @@
 import type { MomentReading } from "../moment.js";
 import { renderReading } from "../render.js";
 import { renderLiuren } from "../liuren/index.js";
-import { chatComplete, chatStream, type SystemBlock, type Usage } from "./provider.js";
+import { chatComplete, chatStream, type SystemBlock, type Usage, type ProviderOptions } from "./provider.js";
 
 const MAX_TOKENS = 7000;
 
@@ -58,23 +58,29 @@ export interface CrossResult {
   usage: Usage;
 }
 
-/** 互证断卦(非流式)。 */
-export async function crossInterpret(m: MomentReading): Promise<CrossResult> {
-  const { text, usage } = await chatComplete({
-    kind: "report",
-    maxTokens: MAX_TOKENS,
-    system: buildCrossContext(m),
-    messages: [{ role: "user", content: buildCrossPrompt(m.liuyao.question) }],
-  });
+/** 互证断卦(非流式)。opts 可传 BYOK(用户自带 provider/key)。 */
+export async function crossInterpret(m: MomentReading, opts?: ProviderOptions): Promise<CrossResult> {
+  const { text, usage } = await chatComplete(
+    {
+      kind: "report",
+      maxTokens: MAX_TOKENS,
+      system: buildCrossContext(m),
+      messages: [{ role: "user", content: buildCrossPrompt(m.liuyao.question) }],
+    },
+    opts,
+  );
   return { text, usage };
 }
 
-/** 互证断卦(流式)。 */
-export function streamCross(m: MomentReading) {
-  return chatStream({
-    kind: "report",
-    maxTokens: MAX_TOKENS,
-    system: buildCrossContext(m),
-    messages: [{ role: "user", content: buildCrossPrompt(m.liuyao.question) }],
-  });
+/** 互证断卦(流式)。opts 可传 BYOK。 */
+export function streamCross(m: MomentReading, opts?: ProviderOptions) {
+  return chatStream(
+    {
+      kind: "report",
+      maxTokens: MAX_TOKENS,
+      system: buildCrossContext(m),
+      messages: [{ role: "user", content: buildCrossPrompt(m.liuyao.question) }],
+    },
+    opts,
+  );
 }

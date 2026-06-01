@@ -75,6 +75,19 @@ Casting is free and needs no key. Only AI interpretation/cross-validation goes t
 | `anthropic` | paid | yes | highest quality |
 | `custom` | depends | maybe | any OpenAI-compatible endpoint |
 
+> **Bring your own key (BYOK) in the web UI**: the site defaults to free Pollinations; click "⚙ AI 设置" to pick GLM / Gemini / Claude / custom and paste your own key — **the key lives only in your browser, is forwarded per-request, and is never stored or logged by the server**.
+
+## Deploy to Vercel
+
+The repo is import-ready (`apps/web/vercel.json` + the build script builds the casting engine before `next build`):
+
+1. Go to [vercel.com](https://vercel.com) → **Add New → Project** → import `Crazycreate/liuyao`
+2. **Set Root Directory to `apps/web`** (Next.js auto-detected)
+3. **Deploy**. Works immediately: free Pollinations by default; users paste their own key under "⚙ AI 设置" for a better model
+4. (optional) In Vercel → Settings → Environment Variables, set `AI_PROVIDER` + its key as a server-side default
+
+> ⚠️ Vercel's free serverless functions time out at **60s**: fast models (GLM-Flash / Gemini-Flash) are fine; Claude Opus long readings may exceed it (needs Pro or a faster model).
+
 ## Project Structure
 
 ```

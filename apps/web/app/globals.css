@@ -824,6 +824,70 @@ label.fld {
   .dipan-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
+/* ── AI 设置(BYOK) ── */
+.settings {
+  margin-top: 1rem;
+}
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), color 0.2s;
+}
+.settings-toggle:hover {
+  border-color: var(--cinnabar-soft);
+  color: var(--ink);
+}
+.settings-toggle .caret {
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+.settings-body {
+  margin-top: 0.6rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.settings-select,
+.settings-input {
+  width: 100%;
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+}
+.settings-select:focus,
+.settings-input:focus {
+  outline: none;
+  border-color: var(--cinnabar-soft);
+  box-shadow: 0 0 0 3px oklch(52% 0.18 32 / 0.1);
+}
+.settings-note {
+  margin: 1rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--ink-faint);
+}
+.settings-note b {
+  color: var(--cinnabar);
+}
+.settings-body a {
+  color: var(--cinnabar);
+}
+
 .footer {
   margin-top: 3rem;
   text-align: center;
