@@ -21,15 +21,23 @@ AI 辅助的**六爻(纳甲/京房)占卜工具**,用来测**具体的事**(求�
 
 ## 快速开始
 
+### Web 界面(推荐)
+
 ```bash
-# 1. 安装依赖
 npm install
+npm run build                 # 先构建排卦引擎(web 依赖它)
+npm run dev -w @liuyao/web     # 打开 http://localhost:3030
+```
 
-# 2. 构建
-npm run build
+输入所问之事 → 摇卦/手动报卦 → 看卦盘(本卦/变卦、世应、纳甲、六亲六神、伏神、占时)→ AI 流式断卦。
+> Web 端断卦走服务端,默认 provider 见下表;真断卦建议在 `.env` 切到 `ollama` 或 `glm`。
 
-# 3. 摇一卦并断事(默认免 key)
-node bin/liuyao.mjs "这次面试能成吗"
+### 命令行
+
+```bash
+npm install && npm run build
+node bin/liuyao.mjs "这次面试能成吗"          # 摇卦 + 断卦(默认免 key)
+node bin/liuyao.mjs "测病" --provider ollama   # 用本地 ollama 断卦(质量好)
 ```
 
 ### 更多用法
@@ -81,6 +89,7 @@ src/
   index.ts      castReading() 主入口
   ai/           多 provider 断卦层(provider/prompts/context/interpret)
 bin/liuyao.mjs  CLI
+apps/web/       Next.js 14 Web 界面(水墨/朱砂);/api/cast 排卦、/api/interpret 流式断卦
 ```
 
 ## 断卦方法(AI 遵循的规则)

@@ -5,13 +5,27 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ai": {
+      "types": "./dist/ai/index.d.ts",
+      "default": "./dist/ai/index.js"
+    }
+  },
   "bin": {
     "liuyao": "bin/liuyao.mjs"
   },
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "node --test",
-    "cast": "node bin/liuyao.mjs"
+    "cast": "node bin/liuyao.mjs",
+    "dev:web": "npm run dev -w @liuyao/web"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
