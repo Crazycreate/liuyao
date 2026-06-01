@@ -132,7 +132,15 @@ export function buildSanChuan(
         note = "涉害取用流派差异大,需课例校验";
       }
     }
-    const { zhong, mo } = chain(tianpan, chu);
+    // 伏吟(天地盘同)即便有克定初传,中末仍以刑递推;否则常规上神链
+    let zhong: string;
+    let mo: string;
+    if (fuyin) {
+      zhong = XING[chu]! === chu ? zhiShang : XING[chu]!;
+      mo = XING[zhong]! === zhong ? ganShang : XING[zhong]!;
+    } else {
+      ({ zhong, mo } = chain(tianpan, chu));
+    }
     return { chu, zhong, mo, method: fuyin ? method + "·伏吟" : fanyin ? method + "·反吟" : method, note };
   }
 

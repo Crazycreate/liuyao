@@ -110,21 +110,19 @@ export interface Ke {
   relation: "上克下" | "下贼上" | "无";
 }
 
-function controls(a: string, b: string): boolean {
-  // a 之五行 克 b 之五行
-  const ctl: Record<string, string> = { 金: "木", 木: "土", 土: "水", 水: "火", 火: "金" };
-  return ctl[ZHI_ELEMENT[a]!] === ZHI_ELEMENT[b]!;
-}
-function keRelation(shang: string, xia: string): Ke["relation"] {
-  if (controls(xia, shang)) return "下贼上";
-  if (controls(shang, xia)) return "上克下";
+const CTL: Record<string, string> = { 金: "木", 木: "土", 土: "水", 水: "火", 火: "金" };
+/** 按五行判课之上下克:用元素而非地支,使一课能用日干五行。 */
+function relationByElement(shangEl: string, xiaEl: string): Ke["relation"] {
+  if (CTL[xiaEl] === shangEl) return "下贼上"; // 下克上
+  if (CTL[shangEl] === xiaEl) return "上克下"; // 上克下
   return "无";
 }
 
 /**
  * 四课:
- *  一课 下=日干寄宫,上=其上神;二课 下=一课上神,上=其上神;
- *  三课 下=日支,    上=其上神;四课 下=三课上神,上=其上神。
+ *  一课 下=日干(取干五行),上=干寄宫之上神;二课 下=一课上神,上=其上神;
+ *  三课 下=日支,            上=其上神;四课 下=三课上神,上=其上神。
+ * ⚠ 一课「下神」为日干本身(五行按天干),不是寄宫地支——决定贼克取用,易错。
  */
 export function buildSiKe(tianpan: string[], dayGan: string, dayZhi: string): Ke[] {
   const ji = JIGONG[dayGan]!;
@@ -132,16 +130,11 @@ export function buildSiKe(tianpan: string[], dayGan: string, dayZhi: string): Ke
   const k2Shang = shangShen(tianpan, k1Shang);
   const k3Shang = shangShen(tianpan, dayZhi);
   const k4Shang = shangShen(tianpan, k3Shang);
-  const mk = (index: number, xia: string, shang: string): Ke => ({
-    index,
-    xia,
-    shang,
-    relation: keRelation(shang, xia),
-  });
   return [
-    mk(1, ji, k1Shang),
-    mk(2, k1Shang, k2Shang),
-    mk(3, dayZhi, k3Shang),
-    mk(4, k3Shang, k4Shang),
+    // 一课:下神显示为日干,克关系按日干五行
+    { index: 1, xia: dayGan, shang: k1Shang, relation: relationByElement(ZHI_ELEMENT[k1Shang]!, GAN_ELEMENT[dayGan]!) },
+    { index: 2, xia: k1Shang, shang: k2Shang, relation: relationByElement(ZHI_ELEMENT[k2Shang]!, ZHI_ELEMENT[k1Shang]!) },
+    { index: 3, xia: dayZhi, shang: k3Shang, relation: relationByElement(ZHI_ELEMENT[k3Shang]!, ZHI_ELEMENT[dayZhi]!) },
+    { index: 4, xia: k3Shang, shang: k4Shang, relation: relationByElement(ZHI_ELEMENT[k4Shang]!, ZHI_ELEMENT[k3Shang]!) },
   ];
 }

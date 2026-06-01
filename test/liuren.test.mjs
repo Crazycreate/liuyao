@@ -23,10 +23,10 @@ test("四课链:二课下=一课上,四课下=三课上", () => {
   assert.equal(c.sike[0].xia, "亥".length ? c.sike[0].xia : "", ""); // 占位
 });
 
-test("一课下神=日干寄宫、三课下神=日支", () => {
+test("一课下神=日干本身、三课下神=日支", () => {
   const c = castLiuren(FIXED);
-  const JIGONG = { 甲: "寅", 乙: "辰", 丙: "巳", 丁: "未", 戊: "巳", 己: "未", 庚: "申", 辛: "戌", 壬: "亥", 癸: "丑" };
-  assert.equal(c.sike[0].xia, JIGONG[c.moment.dayGan]);
+  // 一课下书日干(克关系按日干五行,非寄宫)
+  assert.equal(c.sike[0].xia, c.moment.dayGan);
   assert.equal(c.sike[2].xia, c.moment.dayZhi);
 });
 
