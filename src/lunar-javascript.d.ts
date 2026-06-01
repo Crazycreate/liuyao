@@ -13,11 +13,14 @@ declare module "lunar-javascript" {
       second: number,
     ): Solar;
     getLunar(): Lunar;
+    getJulianDay(): number;
     toYmdHms(): string;
   }
 
   export class Lunar {
     getEightChar(): EightChar;
+    /** 节气名 → Solar(覆盖该年前后约一年范围) */
+    getJieQiTable(): Record<string, Solar>;
     toString(): string;
   }
 
@@ -29,6 +32,7 @@ declare module "lunar-javascript" {
     getTime(): string;
     getDayGan(): string;
     getDayZhi(): string;
+    getTimeZhi(): string;
     getMonthGan(): string;
     getMonthZhi(): string;
     getYearGan(): string;
