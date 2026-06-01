@@ -1,0 +1,25 @@
+{
+  "name": "liuyao",
+  "version": "0.1.0",
+  "description": "六爻(纳甲/京房)占卜工具 —— 确定性起卦装卦引擎 + AI 断卦。排卦要算,断卦才用 AI。",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "liuyao": "bin/liuyao.mjs"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test",
+    "cast": "node bin/liuyao.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "lunar-javascript": "^1.7.0",
+    "openai": "^4.77.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0"
+  }
+}
