@@ -602,6 +602,136 @@ label.fld {
   50% { opacity: 0; }
 }
 
+/* ── 六壬课盘 ── */
+.gua-name.lr {
+  font-size: 1.4rem;
+  color: var(--ink);
+}
+.g-ji { color: var(--jade); }
+.g-xiong { color: var(--cinnabar); }
+.g-ping { color: var(--ink-faint); }
+
+.lr-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.8fr) 1.2fr;
+  gap: 1.2rem 1.6rem;
+  margin: 1rem 0 0.4rem;
+}
+.sc-title {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.6rem;
+}
+.sc-method {
+  color: var(--cinnabar);
+  margin-left: 0.4rem;
+}
+.sc-note {
+  margin-top: 0.5rem;
+  font-size: 0.74rem;
+  color: var(--cinnabar-soft);
+}
+
+.sanchuan {
+  border-right: 1px dashed var(--line);
+  padding-right: 1.2rem;
+}
+.chuan-row {
+  display: grid;
+  grid-template-columns: 2.4rem 2.6rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+}
+.chuan-row .cl {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+.chuan-row .cg {
+  font-size: 0.92rem;
+}
+.chuan-row .cz {
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+.chuan-row .cz i {
+  font-size: 0.7rem;
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.sike-cols {
+  display: flex;
+  gap: 0.8rem;
+}
+.ke {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.2rem;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.ke .cg {
+  font-size: 0.76rem;
+}
+.ke .ks {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.ke .kx {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+.ke .kr {
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+}
+.ke .kr.hit {
+  color: var(--cinnabar);
+}
+
+.dipan {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--line);
+}
+.dipan-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.3rem;
+}
+.dipan-grid .cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.35rem 0;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.dipan-grid .sky {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.dipan-grid .earth {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 640px) {
+  .lr-grid { grid-template-columns: 1fr; }
+  .sanchuan { border-right: none; border-bottom: 1px dashed var(--line); padding: 0 0 1rem; }
+  .dipan-grid { grid-template-columns: repeat(6, 1fr); }
+}
+
 .footer {
   margin-top: 3rem;
   text-align: center;

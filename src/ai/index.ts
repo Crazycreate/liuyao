@@ -1,4 +1,5 @@
 export { interpretReading, streamInterpretation, type Interpretation } from "./interpret.js";
+export { crossInterpret, streamCross, buildCrossContext, CROSS_PERSONA, type CrossResult } from "./cross.js";
 export { buildContext } from "./context.js";
 export { SYSTEM_PERSONA } from "./prompts.js";
 export {

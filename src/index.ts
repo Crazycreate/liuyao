@@ -76,3 +76,6 @@ export { divineDate } from "./date.js";
 export { castCoins, castOneLine, valueToLine } from "./cast.js";
 export { renderReading } from "./render.js";
 export { allHexagrams, hexByBits } from "./hexagrams.js";
+export { castMoment, type MomentReading, type CastMomentInput } from "./moment.js";
+export { castLiuren, renderLiuren } from "./liuren/index.js";
+export type { LiurenCourse, Moment, Ke, SanChuan, Tianjiang } from "./liuren/index.js";
