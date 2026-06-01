@@ -1,5 +1,5 @@
 import { castMoment } from "liuyao";
-import { streamCross, type ProviderOptions } from "liuyao/ai";
+import { streamCross, streamCrossSegment, type ProviderOptions } from "liuyao/ai";
 import { parseCastBody } from "@/lib/input";
 import { ensureEnv } from "@/lib/env";
 import { streamToResponse } from "@/lib/stream";
@@ -22,15 +22,21 @@ function parseAi(raw: unknown): ProviderOptions | undefined {
   return opts.provider || opts.apiKey || opts.model || opts.baseURL ? opts : undefined;
 }
 
-/** 六爻 × 六壬 四维度互证断卦(流式)。 */
+/**
+ * 六爻 × 六壬 互证断卦(流式)。
+ * body.segment 存在 → 只断该维度(分段模式,每段 <60s,绕开 Vercel 函数上限);
+ * 不存在 → 整篇一次断(CLI / 旧调用方,慢模型在免费版可能被 60s 截断)。
+ */
 export async function POST(req: Request): Promise<Response> {
   try {
     ensureEnv();
     const body = await req.json();
     const { question, coinValues, date } = parseCastBody(body, false);
     const ai = parseAi(body);
+    const segment = typeof body?.segment === "string" && body.segment.trim() ? body.segment.trim() : undefined;
     const m = castMoment({ question, coinValues, date });
-    return streamToResponse(streamCross(m, ai));
+    const stream = segment ? streamCrossSegment(m, segment, ai) : streamCross(m, ai);
+    return streamToResponse(stream);
   } catch (err) {
     const message = err instanceof Error ? err.message : "互证失败";
     return Response.json({ error: message }, { status: 400 });
