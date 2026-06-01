@@ -25,6 +25,16 @@ const YIMA: Record<string, string> = {
 const MENG = new Set(["寅", "申", "巳", "亥"]); // 四孟
 const ZHONG = new Set(["子", "午", "卯", "酉"]); // 四仲
 
+/** 地盘各宫所寄天干(子午卯酉无寄) */
+const JIGAN_OF: Record<string, string[]> = {
+  寅: ["甲"], 辰: ["乙"], 巳: ["丙", "戊"], 未: ["丁", "己"],
+  申: ["庚"], 戌: ["辛"], 亥: ["壬"], 丑: ["癸"],
+};
+const GAN_E: Record<string, string> = {
+  甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土",
+  己: "土", 庚: "金", 辛: "金", 壬: "水", 癸: "水",
+};
+
 export interface SanChuan {
   chu: string;
   zhong: string;
@@ -35,35 +45,50 @@ export interface SanChuan {
   note?: string;
 }
 
-/** 涉害:best-effort——取涉害深者,深浅同则孟>仲>季。⚠ 此法流派差异大,需课例校验。 */
-function sheHai(pool: string[], tianpan: string[]): string {
-  function depth(s: string): number {
-    const home = zhiIndex(s);
-    const cur = tianpan.indexOf(s); // s 当前所乘地盘位
-    let cnt = 0;
-    let p = cur;
-    for (let step = 0; step < 12; step++) {
-      if (p === home) break;
-      if (zhiControls(ZHI[p]!, s)) cnt++; // 途经地盘克我者计一害
-      p = (p - 1 + 12) % 12; // 逆行归家
+/**
+ * 涉害取用(定本算法,已对古籍课例「甲辰日戌加寅 → 子」校验):
+ * 各候选上神自天盘所临宫位「顺行」归地盘本家,沿途数「地盘支神及其所寄天干」克上神之数(一重),
+ * 涉害深(克多)者发用;深浅相等取四孟(见机)、无孟取四仲(察微);
+ * 孟仲俱无,柔辰刚日:阳日取干上神、阴日取支上神。
+ */
+function sheHaiDepth(s: string, tianpan: string[]): number {
+  const home = zhiIndex(s);
+  let p = tianpan.indexOf(s); // 上神所乘地盘位
+  let cnt = 0;
+  for (let step = 0; step < 12; step++) {
+    if (p === home) break;
+    const z = ZHI[p]!;
+    if (zhiControls(z, s)) cnt++; // 地盘支克上神
+    for (const g of JIGAN_OF[z] ?? []) {
+      if (CTL[GAN_E[g]!] === ZHI_ELEMENT[s]!) cnt++; // 所寄天干克上神
     }
-    return cnt;
+    p = (p + 1) % 12; // 顺行归家
   }
+  return cnt;
+}
+function sheHai(
+  pool: string[],
+  tianpan: string[],
+  dayGan: string,
+  ganShang: string,
+  zhiShang: string,
+): string {
   let best = pool[0]!;
-  let bestD = depth(best);
+  let bestD = sheHaiDepth(best, tianpan);
   for (const s of pool.slice(1)) {
-    const d = depth(s);
+    const d = sheHaiDepth(s, tianpan);
     if (d > bestD) {
       best = s;
       bestD = d;
     }
   }
-  // 深浅相同的,取孟>仲>季
-  const tied = pool.filter((s) => depth(s) === bestD);
+  const tied = pool.filter((s) => sheHaiDepth(s, tianpan) === bestD);
   if (tied.length > 1) {
     const meng = tied.find((s) => MENG.has(s));
+    if (meng) return meng;
     const zhong = tied.find((s) => ZHONG.has(s));
-    best = meng ?? zhong ?? tied[0]!;
+    if (zhong) return zhong;
+    return isYangGan(dayGan) ? ganShang : zhiShang; // 柔辰刚日
   }
   return best;
 }
@@ -127,9 +152,8 @@ export function buildSanChuan(
         chu = bi[0]!;
         method = "比用";
       } else {
-        chu = sheHai(bi.length ? bi : uniq, tianpan);
+        chu = sheHai(bi.length ? bi : uniq, tianpan, dayGan, ganShang, zhiShang);
         method = "涉害";
-        note = "涉害取用流派差异大,需课例校验";
       }
     }
     // 伏吟(天地盘同)即便有克定初传,中末仍以刑递推;否则常规上神链

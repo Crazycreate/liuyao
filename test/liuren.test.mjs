@@ -1,6 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { castLiuren } from "../dist/liuren/index.js";
+import { buildPlate, buildSiKe } from "../dist/liuren/core.js";
+import { buildSanChuan } from "../dist/liuren/sanchuan.js";
+
+test("涉害·古籍课例:甲辰日戌加寅 → 涉害取子(子5重>戌4重)", () => {
+  const { tianpan, offset } = buildPlate("戌", "寅"); // 月将戌加占时寅
+  const sike = buildSiKe(tianpan, "甲", "辰");
+  const sc = buildSanChuan(sike, tianpan, offset, "甲", "辰");
+  assert.equal(sc.method, "涉害");
+  assert.equal(sc.chu, "子");
+});
 
 const ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const FIXED = { year: 2026, month: 6, day: 1, hour: 16, minute: 30 };
