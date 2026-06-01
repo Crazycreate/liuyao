@@ -2,6 +2,8 @@
 
 **[English](README.en.md) | [中文](README.md)**
 
+> 🔗 **Live demo: [liuyao-web-seven.vercel.app](https://liuyao-web-seven.vercel.app/)** — works out of the box (free default); paste your own key under "⚙ AI 设置" for better quality.
+
 An AI-assisted divination tool combining **Liu Yao (六爻, najia I Ching)** and **Da Liu Ren (大六壬)**: **one intention-moment, two boards cross-validated**, for divining **concrete matters** (wealth, outcomes, illness, lost items, relationships…).
 
 - **Da Liu Ren = the objective field of the moment**: the situation itself (same minute → same course for anyone).
@@ -76,17 +78,6 @@ Casting is free and needs no key. Only AI interpretation/cross-validation goes t
 | `custom` | depends | maybe | any OpenAI-compatible endpoint |
 
 > **Bring your own key (BYOK) in the web UI**: the site defaults to free Pollinations; click "⚙ AI 设置" to pick GLM / Gemini / Claude / custom and paste your own key — **the key lives only in your browser, is forwarded per-request, and is never stored or logged by the server**.
-
-## Deploy to Vercel
-
-The repo is import-ready (`apps/web/vercel.json` + the build script builds the casting engine before `next build`):
-
-1. Go to [vercel.com](https://vercel.com) → **Add New → Project** → import `Crazycreate/liuyao`
-2. **Set Root Directory to `apps/web`** (Next.js auto-detected)
-3. **Deploy**. Works immediately: free Pollinations by default; users paste their own key under "⚙ AI 设置" for a better model
-4. (optional) In Vercel → Settings → Environment Variables, set `AI_PROVIDER` + its key as a server-side default
-
-> ⚠️ Vercel's free serverless functions time out at **60s**: fast models (GLM-Flash / Gemini-Flash) are fine; Claude Opus long readings may exceed it (needs Pro or a faster model).
 
 ## Project Structure
 
