@@ -84,14 +84,39 @@ export default function Page() {
       {error ? <p className="notice" style={{ marginTop: "1rem" }}>{error}</p> : null}
 
       {result ? (
-        <>
-          <div style={{ height: "1.6rem" }} />
-          <HexBoard reading={result.reading} />
-          <div style={{ height: "1.6rem" }} />
-          <LiurenBoard course={result.liuren} />
-          <div style={{ height: "1.6rem" }} />
+        <div className="cross-flow">
+          {/* 汇流·并置带:两套体系同源,准备交叉验证 */}
+          <div className="flow-systems">
+            <div className="sys sys-a">
+              <span className="sys-tag">六爻</span>
+              <span className="sys-sub">心念抽样 · 因人而异</span>
+            </div>
+            <div className="flow-x" aria-hidden>⇄</div>
+            <div className="sys sys-b">
+              <span className="sys-tag">六壬</span>
+              <span className="sys-sub">客观天时 · 同刻同课</span>
+            </div>
+            <div className="flow-moment">同 一 心 念 时 刻 · 两 盘 同 源</div>
+          </div>
+
+          <section className="board-wrap">
+            <h3 className="board-label is-a"><span className="lbl-sys">六爻</span>本卦 · 变卦</h3>
+            <HexBoard reading={result.reading} />
+          </section>
+
+          <section className="board-wrap">
+            <h3 className="board-label is-b"><span className="lbl-sys">六壬</span>四课 · 三传 · 天地盘</h3>
+            <LiurenBoard course={result.liuren} />
+          </section>
+
+          {/* 汇流箭头:两盘 → 交叉验证 */}
+          <div className="flow-funnel" aria-hidden>
+            <span className="ff-a" />
+            <span className="ff-b" />
+          </div>
+
           <CrossReading input={result.input} ai={ai} />
-        </>
+        </div>
       ) : null}
 
       <p className="footer">
