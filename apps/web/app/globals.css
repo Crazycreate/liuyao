@@ -1057,7 +1057,6 @@ label.fld {
   box-shadow: 0 12px 40px oklch(52% 0.18 32 / 0.12);
 }
 .card.cross::before {
-  content: "交 叉 验 证";
   position: absolute;
   top: 0.85rem;
   right: 1.15rem;
@@ -1067,6 +1066,16 @@ label.fld {
   opacity: 0.5;
   pointer-events: none;
 }
+.card.cross.cross-both::before { content: "交 叉 验 证"; }
+.card.cross.cross-liuyao::before { content: "六 爻"; color: var(--jade); }
+.card.cross.cross-liuren::before { content: "六 壬"; }
+
+/* 视角三选:六爻 / 六壬 / 互证 */
+.lens-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.9rem; align-items: center; }
+.lens-btn.is-liuyao { background: var(--jade); }
+.lens-btn.is-liuren { background: var(--cinnabar); }
+.lens-btn.is-both { background: var(--gold); color: var(--ink); }
+.btn.ghost.lens-active { border-color: var(--cinnabar); color: var(--cinnabar); font-weight: 600; }
 .card.cross .verdict-head h2 {
   font-size: 1.32rem;
 }

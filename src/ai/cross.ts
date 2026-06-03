@@ -107,8 +107,21 @@ export const CROSS_SEGMENTS: CrossSegment[] = [
   },
 ];
 
-function buildSegmentPrompt(question: string, seg: CrossSegment): string {
-  return `就「${question || "所问之事"}」做六爻 × 六壬互证。现在**只**写这一个维度,其它维度一律不写、不重复:\n\n${seg.heading}\n${seg.instruction}\n\n要求:用两盘互证本维度,标注两系统【一致 / 分歧 / 仅一方】;只锚定上面给定的盘面事实,不编造盘中没有的细节。\n【说人话】先用一句大白话给本维度结论,再简短说为什么;术语(用神/发用/天将名/旬空等)第一次出现必须用括号当场翻成人话,不堆砌行话,让完全不懂的人也看得懂。\n【篇幅·硬性】本维度约 ${SEGMENT_WORDS} 字写透即可,**务必在篇幅内把话说完、以句号自然收尾,宁短勿断,绝不写到一半被切。**\n**输出以「${seg.heading}」这个小标题开头。**`;
+/** 断卦视角:只用六爻 / 只用六壬 / 两盘互证。 */
+export type CrossLens = "liuyao" | "liuren" | "both";
+
+/** 视角指令——单系统时强力隔离:就当另一盘不存在,不互相翻译、不做对照(避免"太杂太乱")。 */
+function crossLensDirective(lens: CrossLens): string {
+  if (lens === "liuyao")
+    return "【只用六爻 · 严格隔离】仅以**六爻(纳甲)**断:用神取用、旺衰、动变生克、世应、六亲六神、旬空、月破日冲日合、伏神。**完全不提大六壬**(四课/三传/天将/类神一律不出现),就当没有六壬课;**不做'两系统对照/一致分歧'**,只给六爻一家之断。若本维度要点或小标题里涉及两盘对照(如'一致度'),只取六爻部分、并把措辞改成单系统说法。";
+  if (lens === "liuren")
+    return "【只用六壬 · 严格隔离】仅以**大六壬**断:四课、三传(发用/中传/末传)、十二天将、类神、方位、课体吉凶、三传生克日干。**完全不提六爻**(卦/爻/用神/六亲/世应一律不出现),就当没有六爻卦;**不做'两系统对照/一致分歧'**,只给六壬一家之断。若本维度要点或小标题里涉及两盘对照(如'一致度'),只取六壬部分、并把措辞改成单系统说法。";
+  return "用两盘互证本维度,标注两系统【一致 / 分歧 / 仅一方】(一致更可信、分歧如实标出,不强行调和)。";
+}
+
+function buildSegmentPrompt(question: string, seg: CrossSegment, lens: CrossLens): string {
+  const open = lens === "liuyao" ? "用**六爻(纳甲)**断" : lens === "liuren" ? "用**大六壬**断" : "做六爻 × 六壬互证";
+  return `就「${question || "所问之事"}」${open}。现在**只**写这一个维度,其它维度一律不写、不重复:\n\n${seg.heading}\n${seg.instruction}\n\n要求:${crossLensDirective(lens)} 只锚定上面给定的盘面事实,不编造盘中没有的细节。\n【说人话】先用一句大白话给本维度结论,再简短说为什么;术语(用神/发用/天将名/旬空等)第一次出现必须用括号当场翻成人话,不堆砌行话,让完全不懂的人也看得懂。\n【篇幅·硬性】本维度约 ${SEGMENT_WORDS} 字写透即可,**务必在篇幅内把话说完、以句号自然收尾,宁短勿断,绝不写到一半被切。**\n**输出以「${seg.heading}」这个小标题开头。**`;
 }
 
 /** 单维目标字数:够说透又让最慢模型(Opus)在篇幅内自然收尾。 */
@@ -122,8 +135,8 @@ const SEGMENT_WORDS = "600–800";
  */
 const SEGMENT_MAX_TOKENS = 1900;
 
-/** 分段流式断卦:只断一个维度。segKey ∈ CROSS_SEGMENTS[].key。 */
-export function streamCrossSegment(m: MomentReading, segKey: string, opts?: ProviderOptions) {
+/** 分段流式断卦:只断一个维度。segKey ∈ CROSS_SEGMENTS[].key;lens 决定六爻/六壬/互证。 */
+export function streamCrossSegment(m: MomentReading, segKey: string, opts?: ProviderOptions, lens: CrossLens = "both") {
   const seg = CROSS_SEGMENTS.find((s) => s.key === segKey);
   if (!seg) throw new Error(`未知互证维度:${segKey}`);
   return chatStream(
@@ -131,7 +144,7 @@ export function streamCrossSegment(m: MomentReading, segKey: string, opts?: Prov
       kind: "report",
       maxTokens: SEGMENT_MAX_TOKENS,
       system: buildCrossContext(m),
-      messages: [{ role: "user", content: buildSegmentPrompt(m.liuyao.question, seg) }],
+      messages: [{ role: "user", content: buildSegmentPrompt(m.liuyao.question, seg, lens) }],
     },
     opts,
   );

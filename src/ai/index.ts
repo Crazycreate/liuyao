@@ -8,6 +8,7 @@ export {
   CROSS_PERSONA,
   type CrossResult,
   type CrossSegment,
+  type CrossLens,
 } from "./cross.js";
 export { buildContext } from "./context.js";
 export { SYSTEM_PERSONA } from "./prompts.js";

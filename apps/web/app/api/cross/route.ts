@@ -34,8 +34,9 @@ export async function POST(req: Request): Promise<Response> {
     const { question, coinValues, date } = parseCastBody(body, false);
     const ai = parseAi(body);
     const segment = typeof body?.segment === "string" && body.segment.trim() ? body.segment.trim() : undefined;
+    const lens = body?.lens === "liuyao" || body?.lens === "liuren" ? body.lens : "both";
     const m = castMoment({ question, coinValues, date });
-    const stream = segment ? streamCrossSegment(m, segment, ai) : streamCross(m, ai);
+    const stream = segment ? streamCrossSegment(m, segment, ai, lens) : streamCross(m, ai);
     return streamToResponse(stream);
   } catch (err) {
     const message = err instanceof Error ? err.message : "互证失败";
