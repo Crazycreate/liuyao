@@ -3,12 +3,14 @@ export {
   crossInterpret,
   streamCross,
   streamCrossSegment,
+  streamFollowup,
   CROSS_SEGMENTS,
   buildCrossContext,
   CROSS_PERSONA,
   type CrossResult,
   type CrossSegment,
   type CrossLens,
+  type FollowupTurn,
 } from "./cross.js";
 export { buildContext } from "./context.js";
 export { SYSTEM_PERSONA } from "./prompts.js";

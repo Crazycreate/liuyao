@@ -1086,3 +1086,74 @@ label.fld {
   .flow-systems .sys-sub { font-size: 0.7rem; }
   .flow-x { width: 38px; height: 38px; font-size: 1.1rem; }
 }
+
+/* ── 追问对话串(同一卦多轮追问) ───────────────────────────── */
+.followup {
+  margin-top: 1.5rem;
+  padding-top: 1.15rem;
+  border-top: 1px dashed var(--line);
+}
+.followup-head {
+  margin-bottom: 0.75rem;
+}
+.followup-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
+  margin-bottom: 1.05rem;
+}
+.followup-turn {
+  border-left: 2px solid var(--jade);
+  padding-left: 0.9rem;
+}
+.followup-q {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0 0 0.45rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.fq-badge {
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--paper);
+  background: var(--jade);
+  border-radius: 3px;
+  padding: 0.06rem 0.42rem;
+}
+.followup-a {
+  font-size: 0.95rem;
+}
+.cursor-text {
+  color: var(--ink-faint);
+}
+.followup-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.followup-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.58rem 0.82rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  transition: border-color var(--dur, 0.2s) var(--ease);
+}
+.followup-input:focus {
+  outline: none;
+  border-color: var(--jade);
+}
+.followup-input:disabled {
+  opacity: 0.6;
+}
+@media (max-width: 560px) {
+  .followup-form {
+    flex-direction: column;
+  }
+}

@@ -48,22 +48,42 @@ export function CrossReading({ input, ai }: { input: CrossInput; ai: AiSettings 
   const acRef = useRef<AbortController | null>(null);
   const proseRef = useRef<HTMLDivElement>(null);
 
-  // 换了卦(问题/爻值变)→ 中止、回到"待选视角"状态,不自动跑。
+  // 追问(同一卦多轮对话串)
+  const [qa, setQa] = useState<{ q: string; a: string }[]>([]);
+  const [followQ, setFollowQ] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [followErr, setFollowErr] = useState<string | null>(null);
+  const followAcRef = useRef<AbortController | null>(null);
+
+  // 换了卦(问题/爻值变)→ 中止、回到"待选视角"状态,不自动跑;追问串一并清空。
   const key = `${input.question}|${input.coinValues.join(",")}`;
   useEffect(() => {
     acRef.current?.abort();
+    followAcRef.current?.abort();
     setStarted(false);
     setSlots(INITIAL);
-    return () => acRef.current?.abort();
+    setQa([]);
+    setFollowQ("");
+    setAsking(false);
+    setFollowErr(null);
+    return () => {
+      acRef.current?.abort();
+      followAcRef.current?.abort();
+    };
   }, [key]);
 
   const run = (useLens: Lens) => {
     acRef.current?.abort();
+    followAcRef.current?.abort();
     const ac = new AbortController();
     acRef.current = ac;
     setLens(useLens);
     setStarted(true);
     setSlots(SEGMENTS.map(() => ({ text: "", status: "pending" })));
+    setQa([]);
+    setFollowQ("");
+    setAsking(false);
+    setFollowErr(null);
     const patch = (i: number, p: Partial<Slot>) =>
       setSlots((prev) => {
         const next = [...prev];
@@ -88,6 +108,46 @@ export function CrossReading({ input, ai }: { input: CrossInput; ai: AiSettings 
   const allDone = started && settled === SEGMENTS.length;
   const allError = allDone && slots.every((s) => s.status === "error" && !s.text.trim());
   const anyText = slots.some((s) => s.text.trim());
+
+  // 追问:就这一卦继续问。把已完成的断辞(只取出文的维度)+ 历轮问答回灌,保证连贯。
+  const ask = () => {
+    const q = followQ.trim();
+    if (!q || asking) return;
+    followAcRef.current?.abort();
+    const ac = new AbortController();
+    followAcRef.current = ac;
+    setAsking(true);
+    setFollowErr(null);
+    const priorText = slots
+      .map((s) => s.text.trim())
+      .filter(Boolean)
+      .join("\n\n");
+    const history = qa.map((p) => ({ q: p.q, a: p.a }));
+    const idx = qa.length;
+    setQa((prev) => [...prev, { q, a: "" }]);
+    setFollowQ("");
+    streamPost(
+      "/api/cross",
+      { ...input, ai, lens, followup: { priorText, history, question: q } },
+      (full) => {
+        if (ac.signal.aborted) return;
+        setQa((prev) => {
+          const next = [...prev];
+          if (next[idx]) next[idx] = { ...next[idx], a: full };
+          return next;
+        });
+      },
+      { signal: ac.signal },
+    )
+      .then(() => {
+        if (!ac.signal.aborted) setAsking(false);
+      })
+      .catch((e: unknown) => {
+        if (ac.signal.aborted) return;
+        setAsking(false);
+        setFollowErr(e instanceof Error ? e.message : "追问失败");
+      });
+  };
 
   const markdown = SEGMENTS.map((seg, i) => {
     const s = slots[i];
@@ -146,6 +206,56 @@ export function CrossReading({ input, ai }: { input: CrossInput; ai: AiSettings 
           {LENSES.map((l) => (
             <button key={l.key} className={`btn ghost ${l.key === lens ? "lens-active" : ""}`} onClick={() => run(l.key)}>{l.label}</button>
           ))}
+        </div>
+      ) : null}
+
+      {allDone && !allError && anyText ? (
+        <div className="followup">
+          <div className="followup-head">
+            <span className="who">就这一卦继续追问 · {head.title}</span>
+          </div>
+
+          {qa.length ? (
+            <div className="followup-thread">
+              {qa.map((p, i) => (
+                <div key={i} className="followup-turn">
+                  <p className="followup-q">
+                    <span className="fq-badge">问</span>
+                    {p.q}
+                  </p>
+                  <div className="followup-a prose">
+                    {p.a.trim() ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{p.a}</ReactMarkdown>
+                    ) : (
+                      <span className="cursor-text">{asking && i === qa.length - 1 ? "正在答…" : "…"}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {followErr ? <p className="notice">{followErr}</p> : null}
+
+          <form
+            className="followup-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              ask();
+            }}
+          >
+            <input
+              className="followup-input"
+              value={followQ}
+              onChange={(e) => setFollowQ(e.target.value)}
+              placeholder="例如:这事大概什么时候有结果?我该怎么做?"
+              disabled={asking}
+              aria-label="追问内容"
+            />
+            <button className="btn" type="submit" disabled={asking || !followQ.trim()}>
+              {asking ? "追问中…" : "追问"}
+            </button>
+          </form>
         </div>
       ) : null}
     </div>

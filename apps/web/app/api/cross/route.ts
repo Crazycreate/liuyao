@@ -1,5 +1,5 @@
 import { castMoment } from "liuyao";
-import { streamCross, streamCrossSegment, type ProviderOptions } from "liuyao/ai";
+import { streamCross, streamCrossSegment, streamFollowup, type ProviderOptions, type FollowupTurn } from "liuyao/ai";
 import { parseCastBody } from "@/lib/input";
 import { ensureEnv } from "@/lib/env";
 import { streamToResponse } from "@/lib/stream";
@@ -22,6 +22,25 @@ function parseAi(raw: unknown): ProviderOptions | undefined {
   return opts.provider || opts.apiKey || opts.model || opts.baseURL ? opts : undefined;
 }
 
+/** 解析追问体:{ question, priorText, history[] }。question 为空则不视为追问。 */
+function parseFollowup(
+  raw: unknown,
+): { priorText: string; history: FollowupTurn[]; question: string } | undefined {
+  const f = (raw as { followup?: Record<string, unknown> } | null)?.followup;
+  if (!f || typeof f !== "object") return undefined;
+  const question = typeof f.question === "string" ? f.question.trim() : "";
+  if (!question) return undefined;
+  const priorText = typeof f.priorText === "string" ? f.priorText : "";
+  const histRaw = Array.isArray(f.history) ? f.history : [];
+  const history: FollowupTurn[] = histRaw
+    .map((t) => ({
+      q: typeof (t as FollowupTurn)?.q === "string" ? (t as FollowupTurn).q : "",
+      a: typeof (t as FollowupTurn)?.a === "string" ? (t as FollowupTurn).a : "",
+    }))
+    .filter((t) => t.q.trim() || t.a.trim());
+  return { priorText, history, question };
+}
+
 /**
  * 六爻 × 六壬 互证断卦(流式)。
  * body.segment 存在 → 只断该维度(分段模式,每段 <60s,绕开 Vercel 函数上限);
@@ -35,7 +54,11 @@ export async function POST(req: Request): Promise<Response> {
     const ai = parseAi(body);
     const segment = typeof body?.segment === "string" && body.segment.trim() ? body.segment.trim() : undefined;
     const lens = body?.lens === "liuyao" || body?.lens === "liuren" ? body.lens : "both";
+    const followup = parseFollowup(body);
     const m = castMoment({ question, coinValues, date });
+    if (followup) {
+      return streamToResponse(streamFollowup(m, followup.priorText, followup.history, followup.question, ai, lens));
+    }
     const stream = segment ? streamCrossSegment(m, segment, ai, lens) : streamCross(m, ai);
     return streamToResponse(stream);
   } catch (err) {

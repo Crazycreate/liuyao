@@ -1,7 +1,7 @@
 import type { MomentReading } from "../moment.js";
 import { renderReading } from "../render.js";
 import { renderLiuren } from "../liuren/index.js";
-import { chatComplete, chatStream, type SystemBlock, type Usage, type ProviderOptions } from "./provider.js";
+import { chatComplete, chatStream, type SystemBlock, type Usage, type ProviderOptions, type ChatMessage } from "./provider.js";
 
 const MAX_TOKENS = 7000;
 
@@ -178,6 +178,68 @@ export function streamCross(m: MomentReading, opts?: ProviderOptions) {
       system: buildCrossContext(m),
       messages: [{ role: "user", content: buildCrossPrompt(m.liuyao.question) }],
     },
+    opts,
+  );
+}
+
+/** 一轮追问的问答对(用于把历史回灌给模型,保证多轮连贯)。 */
+export interface FollowupTurn {
+  q: string;
+  a: string;
+}
+
+/** 追问单轮上限。追问答案聚焦、篇幅短(目标 300–500 字),1500 足够且稳在 Vercel 60s 内。 */
+const FOLLOWUP_MAX_TOKENS = 1500;
+
+/** 追问时的视角隔离——与断卦一致:单系统就当另一盘不存在。 */
+function followupLensDirective(lens: CrossLens): string {
+  if (lens === "liuyao")
+    return "【只用六爻】仅以六爻(纳甲)回答,完全不提大六壬(四课/三传/发用/中末传/月将/天乙贵人一律不出现)。注意:六爻的青龙/朱雀/勾陈/螣蛇/白虎/玄武一律称「六神」,**不要叫「天将」、也不要用六壬的「贵人」等称呼**。";
+  if (lens === "liuren")
+    return "【只用六壬】仅以大六壬回答,完全不提六爻(卦/爻/用神/世应一律不出现)。";
+  return "【两盘并用】可六爻、六壬一起看,若有分歧如实标注,不强行调和。";
+}
+
+function buildFollowupPrompt(question: string, lens: CrossLens): string {
+  return `这是针对**同一卦/同一课**的追问——不要重新起卦、不要重排盘面,只就上面已排定的盘回答。
+${followupLensDirective(lens)}
+直接回答用户的追问本身,不必再走"四维度(成败/应期/人物/风险)"的完整结构;若追问与某一维度相关,聚焦该处深入即可。
+【说人话】先一句大白话给结论,再简短说依据;术语第一次出现必须括号当场翻成人话,不堆行话。
+【篇幅】约 300–500 字说透即可,务必句号自然收尾、宁短勿断。
+追问:「${question}」`;
+}
+
+/**
+ * 同一卦/课的多轮追问(流式)。
+ * 复用断卦时的 system(人设 + 双盘事实,facts 块 cache:true → 多轮命中 Anthropic 缓存);
+ * 把"原断辞 + 历轮问答"作为对话历史传入,新问题作为最后一轮 user。
+ * 用 kind:"chat"(更快更省的对话模型,Anthropic 为 Sonnet),答案聚焦短小,单轮稳在 Vercel 60s 内。
+ * lens 决定六爻/六壬/互证,隔离规则与断卦一致(单系统不串到另一盘)。
+ */
+export function streamFollowup(
+  m: MomentReading,
+  priorText: string,
+  history: FollowupTurn[],
+  question: string,
+  opts?: ProviderOptions,
+  lens: CrossLens = "both",
+) {
+  const q = (question || "").trim();
+  if (!q) throw new Error("追问内容为空");
+  const messages: ChatMessage[] = [];
+  if (priorText.trim()) {
+    messages.push({ role: "user", content: `就「${m.liuyao.question || "所问之事"}」断卦(盘面见上)。` });
+    messages.push({ role: "assistant", content: priorText.trim() });
+  }
+  for (const t of history) {
+    const tq = (t?.q || "").trim();
+    const ta = (t?.a || "").trim();
+    if (tq) messages.push({ role: "user", content: tq });
+    if (ta) messages.push({ role: "assistant", content: ta });
+  }
+  messages.push({ role: "user", content: buildFollowupPrompt(q, lens) });
+  return chatStream(
+    { kind: "chat", maxTokens: FOLLOWUP_MAX_TOKENS, system: buildCrossContext(m), messages },
     opts,
   );
 }
